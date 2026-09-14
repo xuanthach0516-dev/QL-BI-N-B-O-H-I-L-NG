@@ -26,6 +26,9 @@ import {
   Crosshair,
   Move,
   MapPin,
+  Columns,
+  Rows,
+  LayoutTemplate,
 } from 'lucide-react';
 import { MasterConfig, ARTWORK_WIDTH, ARTWORK_HEIGHT, TOTAL_WIDTH, TOTAL_HEIGHT, MOUNTING_TRIM_WIDTH } from '../types';
 import { generateMasterArtworkSvg, generateAssemblyViewSvg, DEFAULT_MASTER_CONFIG } from '../utils/masterSvg';
@@ -108,6 +111,8 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   const [showCoordinatesGuide, setShowCoordinatesGuide] = useState<boolean>(true);
   const [customTitleFontMode, setCustomTitleFontMode] = useState(false);
   const [customRoadFontMode, setCustomRoadFontMode] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'COORDINATES' | 'TYPOGRAPHY' | 'LOGO' | 'FRAME_STYLE' | 'ALL'>('COORDINATES');
+  const [layoutMode, setLayoutMode] = useState<'SPLIT' | 'PREVIEW_TOP'>('SPLIT');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const logoX = config.logoX ?? 110;
@@ -257,10 +262,73 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
         </div>
       </div>
 
+      {/* Thanh Điều Khiển Chế Độ Xem & Đồng Bộ Trực Quan */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <div>
+            <div className="text-xs font-bold text-white flex items-center gap-2">
+              <span>Đồng Bộ Trực Quan Master Artwork</span>
+              <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-700 font-mono font-bold">
+                LIVE SYNC
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Mọi hiệu chỉnh thông số sẽ phản hồi tức thì trên Bản vẽ Master Artwork được ghim hiển thị liên tục.
+            </div>
+          </div>
+        </div>
+
+        {/* Chuyển Đổi Chế Độ Bố Cục */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-slate-400 font-bold hidden md:inline">Bố cục màn hình:</span>
+          <div className="bg-slate-950 p-1 rounded-lg border border-slate-800 flex items-center text-xs">
+            <button
+              type="button"
+              onClick={() => setLayoutMode('SPLIT')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                layoutMode === 'SPLIT'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Bố cục 2 Cột: Tùy chỉnh bên trái, Bản vẽ Ghim Cố Định bên phải (đảm bảo không bị cuộn mất)"
+            >
+              <Columns className="w-3.5 h-3.5" />
+              <span>Ghim Song Song</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLayoutMode('PREVIEW_TOP')}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                layoutMode === 'PREVIEW_TOP'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Bố cục Trên Dưới: Bản vẽ Artwork lớn ở trên, Bảng tùy chỉnh bên dưới"
+            >
+              <Rows className="w-3.5 h-3.5" />
+              <span>Bản Vẽ Ở Trên</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 3. Grid: Master Controls & Master Live Preview Vừa Khung In */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div
+        className={
+          layoutMode === 'SPLIT'
+            ? 'grid grid-cols-1 lg:grid-cols-12 gap-6 items-start'
+            : 'space-y-6'
+        }
+      >
         {/* Cột trái: Bảng điều khiển Master khi Mở khóa / Thông số chuẩn khi Khóa */}
-        <div className="lg:col-span-5 space-y-4">
+        <div
+          className={
+            layoutMode === 'SPLIT'
+              ? 'lg:col-span-5 space-y-4 order-2 lg:order-1'
+              : 'w-full space-y-4 order-2'
+          }
+        >
           {!config.isLocked ? (
             /* BẢNG ĐIỀU KHIỂN CHỈNH SỬA KHI MỞ KHÓA */
             <div className="bg-slate-900 border border-emerald-500/40 rounded-xl p-5 shadow-sm space-y-5">
@@ -280,8 +348,114 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                 </button>
               </div>
 
+              {/* 1. Thanh Thử Nghiệm Tên Đường Trực Tiếp (Sample Road Name) */}
+              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-300">Thử nghiệm Tên đường trực tiếp:</span>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold">Xem kết quả ngay</span>
+                </div>
+                <input
+                  type="text"
+                  value={sampleRoadName}
+                  onChange={(e) => setSampleRoadName(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 text-white font-bold text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-500 uppercase tracking-wide"
+                  placeholder="Ví dụ: DX.813, NGUYỄN VĂN TRỖI, ĐT.765..."
+                />
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] text-slate-400">Chọn nhanh:</span>
+                  {['DX.813', 'ĐƯỜNG LIÊN THÔN 03', 'NGUYỄN VĂN A', 'ĐT.765'].map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => setSampleRoadName(name)}
+                      className={`text-[10px] px-2 py-0.5 rounded border transition cursor-pointer ${
+                        sampleRoadName === name
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-700 font-bold'
+                          : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Thanh Chọn Tab Danh Mục Tùy Chỉnh */}
+              <div className="space-y-1">
+                <div className="text-[11px] font-bold text-slate-400 px-0.5">
+                  Chọn nhóm thông số cần hiệu chỉnh:
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('COORDINATES')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'COORDINATES'
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <Crosshair className="w-3.5 h-3.5" />
+                    <span className="truncate">Tọa Độ (X,Y)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('TYPOGRAPHY')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'TYPOGRAPHY'
+                        ? 'bg-cyan-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <Type className="w-3.5 h-3.5" />
+                    <span className="truncate">Font &amp; Chữ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('LOGO')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'LOGO'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span className="truncate">Logo Xã</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('FRAME_STYLE')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'FRAME_STYLE'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span className="truncate">Viền &amp; Nền</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('ALL')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer col-span-2 sm:col-span-1 ${
+                      activeSettingsTab === 'ALL'
+                        ? 'bg-slate-700 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span className="truncate">Tất Cả</span>
+                  </button>
+                </div>
+              </div>
+
               {/* PHẦN A: TÙY CHỌN FONT TIÊU ĐỀ & TÊN ĐƯỜNG (Typography) */}
-              <div className="space-y-4 pb-4 border-b border-slate-800">
+              {(activeSettingsTab === 'TYPOGRAPHY' || activeSettingsTab === 'ALL') && (
+                <div className="space-y-4 pb-4 border-b border-slate-800">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-black text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Type className="w-4 h-4 text-cyan-400" />
@@ -391,13 +565,17 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   </div>
                 </div>
               </div>
+              )}
 
-              {/* PHẦN B: Màu nền biển */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Màu Nền Biển (Background Color):</span>
-                </label>
+              {/* PHẦN B & C: Màu nền biển & Khung viền nghệ thuật (FRAME_STYLE) */}
+              {(activeSettingsTab === 'FRAME_STYLE' || activeSettingsTab === 'ALL') && (
+                <div className="space-y-4 pt-2 border-t border-slate-800">
+                  {/* PHẦN B: Màu nền biển */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Màu Nền Biển (Background Color):</span>
+                    </label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -483,13 +661,18 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+            )}
 
-              {/* PHẦN D: Tiêu đề cố định & kích thước */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Type className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Nội Dung Tiêu Đề Cố Định:</span>
-                </label>
+            {/* PHẦN D & E: Tiêu đề cố định & kích thước & dung sai tên đường (TYPOGRAPHY) */}
+            {(activeSettingsTab === 'TYPOGRAPHY' || activeSettingsTab === 'ALL') && (
+              <div className="space-y-4 pt-2 border-t border-slate-800">
+                {/* PHẦN D: Tiêu đề cố định & kích thước */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Type className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Nội Dung Tiêu Đề Cố Định:</span>
+                  </label>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-slate-400 text-[11px] block mb-1">Nội dung chữ:</span>
@@ -540,8 +723,11 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+            )}
 
-              {/* PHẦN F: Logo Xã / Biểu trưng */}
+            {/* PHẦN F: Logo Xã / Biểu trưng (LOGO) */}
+            {(activeSettingsTab === 'LOGO' || activeSettingsTab === 'ALL') && (
               <div className="space-y-3 pt-2 border-t border-slate-800">
                 <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
@@ -585,10 +771,12 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   </div>
                 </div>
               </div>
+              )}
 
-              {/* PHẦN G: TÙY CHỈNH VỊ TRÍ TỌA ĐỘ (LOGO, TIÊU ĐỀ, TÊN ĐƯỜNG) */}
-              <div className="space-y-4 pt-3 border-t border-slate-800">
-                <div className="flex items-center justify-between">
+              {/* PHẦN G: TÙY CHỈNH VỊ TRÍ TỌA ĐỘ (LOGO, TIÊU ĐỀ, TÊN ĐƯỜNG) (COORDINATES) */}
+              {(activeSettingsTab === 'COORDINATES' || activeSettingsTab === 'ALL') && (
+                <div className="space-y-4 pt-3 border-t border-slate-800">
+                  <div className="flex items-center justify-between">
                   <label className="text-xs font-black text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Crosshair className="w-4 h-4 text-rose-400" />
                     <span>Tùy Chỉnh Vị Trí Chữ Tiêu Đề, Logo, Tên Đường</span>
@@ -905,6 +1093,7 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   </div>
                 </div>
               </div>
+              )}
             </div>
           ) : (
             /* BẢNG THÔNG SỐ CỐ ĐỊNH KHI ĐANG KHÓA (LOCKED) */
@@ -1012,24 +1201,32 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
             </div>
           )}
 
-          {/* Test Road Name Input for Live Master verification */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
-            <label className="block text-xs font-bold text-slate-300 flex items-center justify-between">
-              <span>Thử nghiệm Tên đường trực tiếp trên Master:</span>
-              <span className="text-[11px] font-normal text-slate-400">Gõ tên đường bất kỳ</span>
-            </label>
-            <input
-              type="text"
-              value={sampleRoadName}
-              onChange={(e) => setSampleRoadName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 uppercase"
-              placeholder="Ví dụ: DX.813, NGUYỄN THỊ MINH KHAI, ĐT.2901..."
-            />
-          </div>
+          {/* Test Road Name Input for Live Master verification khi khóa */}
+          {config.isLocked && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
+              <label className="block text-xs font-bold text-slate-300 flex items-center justify-between">
+                <span>Thử nghiệm Tên đường trực tiếp trên Master:</span>
+                <span className="text-[11px] font-normal text-slate-400">Gõ tên đường bất kỳ</span>
+              </label>
+              <input
+                type="text"
+                value={sampleRoadName}
+                onChange={(e) => setSampleRoadName(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 uppercase"
+                placeholder="Ví dụ: DX.813, NGUYỄN THỊ MINH KHAI, ĐT.2901..."
+              />
+            </div>
+          )}
         </div>
 
         {/* Cột phải: Master Live Preview HIỂN THỊ VỪA KHUNG IN & XML Source */}
-        <div className="lg:col-span-7 space-y-4">
+        <div
+          className={
+            layoutMode === 'SPLIT'
+              ? 'lg:col-span-7 space-y-4 lg:sticky lg:top-4 self-start order-1 lg:order-2 z-10'
+              : 'w-full space-y-4 order-1'
+          }
+        >
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
             {/* Top Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
