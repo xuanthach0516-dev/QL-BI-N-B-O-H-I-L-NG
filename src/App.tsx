@@ -14,6 +14,7 @@ import {
 import { runBatchQc } from './utils/qcEngine';
 import { exportSignsExcel } from './utils/exportUtils';
 import { DEFAULT_MASTER_CONFIG } from './utils/masterSvg';
+import { loadSavedMasterConfig, saveMasterConfig } from './utils/templateStorage';
 
 // Components
 import { Header } from './components/Header';
@@ -31,8 +32,15 @@ import { SignEditModal } from './components/SignEditModal';
 import { BuiltInTestsModal } from './components/BuiltInTestsModal';
 
 export default function App() {
-  // 1. Cấu hình Master Template
-  const [masterConfig, setMasterConfig] = useState<MasterConfig>(DEFAULT_MASTER_CONFIG);
+  // 1. Cấu hình Master Template (Luôn tự động nạp từ LocalStorage đã lưu của người dùng)
+  const [masterConfig, setMasterConfig] = useState<MasterConfig>(() => {
+    return loadSavedMasterConfig();
+  });
+
+  // Luôn tự động lưu cấu hình Master Template của người dùng vào LocalStorage khi có thay đổi
+  useEffect(() => {
+    saveMasterConfig(masterConfig);
+  }, [masterConfig]);
 
   // 2. Kích thước Batch (Rule 24: Mặc định 500)
   const [batchSize, setBatchSize] = useState<number>(500);

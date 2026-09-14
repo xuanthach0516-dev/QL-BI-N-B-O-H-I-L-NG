@@ -33,10 +33,22 @@ import {
   AlignCenter,
   AlignRight,
   Split,
+  HardDrive,
+  Download,
+  FileJson,
+  UploadCloud,
+  Save,
 } from 'lucide-react';
 import { MasterConfig, ARTWORK_WIDTH, ARTWORK_HEIGHT, TOTAL_WIDTH, TOTAL_HEIGHT, MOUNTING_TRIM_WIDTH } from '../types';
 import { generateMasterArtworkSvg, generateAssemblyViewSvg, DEFAULT_MASTER_CONFIG } from '../utils/masterSvg';
 import { fitRoadName } from '../utils/fitRoadName';
+import {
+  saveMasterConfig,
+  resetSavedMasterConfig,
+  exportMasterConfigAsJson,
+  parseAndValidateConfigJson,
+  getLastSavedTimestamp,
+} from '../utils/templateStorage';
 
 interface MasterTemplateViewProps {
   config: MasterConfig;
@@ -118,7 +130,9 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   const [customRoadFontMode, setCustomRoadFontMode] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<'TYPOGRAPHY' | 'ROW_LAYOUT' | 'COORDINATES' | 'LOGO' | 'FRAME_STYLE' | 'ALL'>('TYPOGRAPHY');
   const [layoutMode, setLayoutMode] = useState<'SPLIT' | 'PREVIEW_TOP'>('SPLIT');
+  const [saveStatusMsg, setSaveStatusMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   const logoX = config.logoX ?? 110;
   const logoY = config.logoY ?? 96;
@@ -142,6 +156,8 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
       roadNameX: 250,
       roadNameY: 230,
     });
+    setSaveStatusMsg('Đã khôi phục vị trí mặc định!');
+    setTimeout(() => setSaveStatusMsg(null), 2500);
   };
 
   const adjustVal = (key: keyof MasterConfig, delta: number, min: number, max: number, defaultVal: number) => {
@@ -166,7 +182,43 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   };
 
   const handleResetDefault = () => {
-    onUpdateConfig({ ...DEFAULT_MASTER_CONFIG, isLocked: false });
+    const defaultConfig = resetSavedMasterConfig();
+    onUpdateConfig(defaultConfig);
+    setSaveStatusMsg('Đã khôi phục cài đặt gốc Master V4.0 và xóa cấu hình lưu tùy chỉnh!');
+    setTimeout(() => setSaveStatusMsg(null), 3000);
+  };
+
+  const handleExportJson = () => {
+    exportMasterConfigAsJson(config, `master-template-config-${config.templateVersion.toLowerCase()}.json`);
+    setSaveStatusMsg('Đã xuất tệp sao lưu cấu hình JSON thành công!');
+    setTimeout(() => setSaveStatusMsg(null), 3000);
+  };
+
+  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const imported = parseAndValidateConfigJson(text);
+        saveMasterConfig(imported);
+        onUpdateConfig(imported);
+        setSaveStatusMsg('✓ Đã nạp và lưu thành công cấu hình Master từ tệp JSON!');
+        setTimeout(() => setSaveStatusMsg(null), 3500);
+      } catch (err: any) {
+        alert('Lỗi khi nạp tệp cấu hình JSON: ' + (err?.message || 'Tệp cấu hình không hợp lệ!'));
+      }
+    };
+    reader.readAsText(file);
+    if (jsonInputRef.current) jsonInputRef.current.value = '';
+  };
+
+  const handleManualSave = () => {
+    saveMasterConfig(config);
+    setSaveStatusMsg('✓ Cấu hình mẫu đã được lưu vào bộ nhớ trình duyệt!');
+    setTimeout(() => setSaveStatusMsg(null), 3000);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +305,96 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 2. Thanh Quản Lý Lưu Cấu Hình Mẫu (Auto-Save & Backup Persistence Bar) */}
+      <div className="bg-slate-900/90 border border-slate-700 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+            <HardDrive className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="font-bold text-white uppercase tracking-wider text-xs">
+                Cài Đặt Mẫu Luôn Tự Động Lưu (Auto-Save Enabled)
+              </span>
+              <span className="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono border border-slate-700">
+                Lưu vào LocalStorage
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Mọi thay đổi (Font chữ, Hàng chữ, Màu sắc, Viền khuyết góc, Tọa độ X-Y, Logo...) luôn được tự động lưu vĩnh viễn trên trình duyệt này. Tải lại trang (F5) hay tắt tab sẽ giữ nguyên 100% mẫu của bạn.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <input
+            type="file"
+            ref={jsonInputRef}
+            onChange={handleImportJson}
+            accept=".json,application/json"
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={handleManualSave}
+            title="Lưu ngay lập tức cấu hình hiện tại vào bộ nhớ trình duyệt"
+            className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-emerald-500/40 shadow-sm"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Lưu Ngay</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportJson}
+            title="Tải tệp tin JSON sao lưu cấu hình mẫu về máy tính để cất giữ hoặc chuyển sang máy khác"
+            className="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-cyan-500/30 shadow-sm"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Sao Lưu JSON</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => jsonInputRef.current?.click()}
+            title="Nạp lại tệp tin JSON cấu hình đã lưu trước đó"
+            className="bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-amber-500/30 shadow-sm"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Nạp Tệp JSON</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleResetDefault}
+            title="Khôi phục toàn bộ thông số mẫu về chuẩn V4.0 gốc của dự án Hải Lăng và xóa cấu hình lưu"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-slate-700"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+            <span>Khôi Phục Gốc V4.0</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Thông báo thao tác lưu thành công */}
+      {saveStatusMsg && (
+        <div className="bg-emerald-950/80 border border-emerald-500/60 rounded-lg p-3 text-emerald-300 text-xs flex items-center justify-between shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span className="font-bold">{saveStatusMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSaveStatusMsg(null)}
+            className="text-slate-400 hover:text-white text-xs cursor-pointer px-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 2. Cảnh báo Logo (Rule 8) */}
       <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 text-amber-200 text-xs sm:text-sm">

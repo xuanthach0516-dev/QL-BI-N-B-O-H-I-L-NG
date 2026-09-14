@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings,
   Lock,
@@ -9,10 +9,19 @@ import {
   Save,
   Check,
   Crosshair,
+  HardDrive,
+  Download,
+  UploadCloud,
 } from 'lucide-react';
 import { MasterConfig } from '../types';
 import { DEFAULT_MASTER_CONFIG } from '../utils/masterSvg';
 import { FONT_OPTIONS } from './MasterTemplateView';
+import {
+  saveMasterConfig,
+  resetSavedMasterConfig,
+  exportMasterConfigAsJson,
+  parseAndValidateConfigJson,
+} from '../utils/templateStorage';
 
 interface SettingsViewProps {
   config: MasterConfig;
@@ -29,19 +38,61 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [formConfig, setFormConfig] = useState<MasterConfig>({ ...config });
   const [saved, setSaved] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setFormConfig({ ...config });
+  }, [config]);
 
   const handleSave = () => {
+    saveMasterConfig(formConfig);
     onUpdateConfig(formConfig);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setNotice('✓ Đã lưu cấu hình mẫu vào bộ nhớ trình duyệt!');
+    setTimeout(() => {
+      setSaved(false);
+      setNotice(null);
+    }, 2500);
   };
 
   const handleResetToDefault = () => {
-    const defaultConfig: MasterConfig = { ...DEFAULT_MASTER_CONFIG, isLocked: false };
+    const defaultConfig = resetSavedMasterConfig();
     setFormConfig(defaultConfig);
     onUpdateConfig(defaultConfig);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setNotice('Đã khôi phục mặc định gốc V4.0 và xóa cấu hình tùy chỉnh đã lưu!');
+    setTimeout(() => {
+      setSaved(false);
+      setNotice(null);
+    }, 2500);
+  };
+
+  const handleExportJson = () => {
+    exportMasterConfigAsJson(formConfig, `master-template-config-${formConfig.templateVersion.toLowerCase()}.json`);
+    setNotice('Đã xuất tệp sao lưu cấu hình JSON!');
+    setTimeout(() => setNotice(null), 2500);
+  };
+
+  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const imported = parseAndValidateConfigJson(text);
+        saveMasterConfig(imported);
+        setFormConfig(imported);
+        onUpdateConfig(imported);
+        setNotice('✓ Đã nạp thành công cấu hình từ tệp JSON!');
+        setTimeout(() => setNotice(null), 3000);
+      } catch (err: any) {
+        alert('Không thể nạp tệp cấu hình JSON: ' + (err?.message || 'Tệp không hợp lệ'));
+      }
+    };
+    reader.readAsText(file);
+    if (jsonInputRef.current) jsonInputRef.current.value = '';
   };
 
   return (
@@ -60,7 +111,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            type="file"
+            ref={jsonInputRef}
+            onChange={handleImportJson}
+            accept=".json,application/json"
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={handleExportJson}
+            className="bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Sao Lưu JSON</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => jsonInputRef.current?.click()}
+            className="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Nạp File JSON</span>
+          </button>
+
           <button
             type="button"
             onClick={handleResetToDefault}
@@ -73,11 +150,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
           >
-            {saved ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Save className="w-3.5 h-3.5" />}
-            <span>{saved ? 'Đã Lưu' : 'Lưu Cấu Hình'}</span>
+            {saved ? <Check className="w-3.5 h-3.5 text-white" /> : <Save className="w-3.5 h-3.5" />}
+            <span>{saved ? 'Đã Lưu Vào Bộ Nhớ' : 'Lưu Cấu Hình Mẫu'}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Auto-save notification */}
+      {notice && (
+        <div className="bg-emerald-950 border border-emerald-500/50 rounded-lg p-3 text-emerald-300 text-xs flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="font-bold">{notice}</span>
+          </div>
+          <button type="button" onClick={() => setNotice(null)} className="text-slate-400 hover:text-white cursor-pointer px-2">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Storage persistence indicator banner */}
+      <div className="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <HardDrive className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-white uppercase tracking-wider text-xs flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+              Tự Động Lưu Mẫu Vào Trình Duyệt (LocalStorage Persistence)
+            </span>
+            <p className="text-[11px] text-slate-400">
+              Mọi thay đổi thông số mẫu Master luôn được tự động lưu vĩnh viễn trên thiết bị này. Bạn có thể xuất file JSON để đồng bộ sang máy in hoặc máy tính khác.
+            </p>
+          </div>
         </div>
       </div>
 
