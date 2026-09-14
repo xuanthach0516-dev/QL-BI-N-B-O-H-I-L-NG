@@ -29,9 +29,14 @@ import {
   Columns,
   Rows,
   LayoutTemplate,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Split,
 } from 'lucide-react';
 import { MasterConfig, ARTWORK_WIDTH, ARTWORK_HEIGHT, TOTAL_WIDTH, TOTAL_HEIGHT, MOUNTING_TRIM_WIDTH } from '../types';
 import { generateMasterArtworkSvg, generateAssemblyViewSvg, DEFAULT_MASTER_CONFIG } from '../utils/masterSvg';
+import { fitRoadName } from '../utils/fitRoadName';
 
 interface MasterTemplateViewProps {
   config: MasterConfig;
@@ -111,7 +116,7 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   const [showCoordinatesGuide, setShowCoordinatesGuide] = useState<boolean>(true);
   const [customTitleFontMode, setCustomTitleFontMode] = useState(false);
   const [customRoadFontMode, setCustomRoadFontMode] = useState(false);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'COORDINATES' | 'TYPOGRAPHY' | 'LOGO' | 'FRAME_STYLE' | 'ALL'>('COORDINATES');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'TYPOGRAPHY' | 'ROW_LAYOUT' | 'COORDINATES' | 'LOGO' | 'FRAME_STYLE' | 'ALL'>('TYPOGRAPHY');
   const [layoutMode, setLayoutMode] = useState<'SPLIT' | 'PREVIEW_TOP'>('SPLIT');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,6 +127,9 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   const titleY = config.titleY ?? 126;
   const roadNameX = config.roadNameX ?? 250;
   const roadNameY = config.roadNameY ?? 230;
+
+  // Tính toán thông số fit trực tiếp để hiển thị thông tin hàng & font thời gian thực
+  const liveFit = fitRoadName(sampleRoadName, config);
 
   const handleResetPositions = () => {
     onUpdateConfig({
@@ -385,20 +393,7 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                 <div className="text-[11px] font-bold text-slate-400 px-0.5">
                   Chọn nhóm thông số cần hiệu chỉnh:
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setActiveSettingsTab('COORDINATES')}
-                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
-                      activeSettingsTab === 'COORDINATES'
-                        ? 'bg-rose-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                    }`}
-                  >
-                    <Crosshair className="w-3.5 h-3.5" />
-                    <span className="truncate">Tọa Độ (X,Y)</span>
-                  </button>
-
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs">
                   <button
                     type="button"
                     onClick={() => setActiveSettingsTab('TYPOGRAPHY')}
@@ -414,15 +409,31 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setActiveSettingsTab('LOGO')}
-                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
-                      activeSettingsTab === 'LOGO'
-                        ? 'bg-blue-600 text-white shadow-sm'
+                    onClick={() => setActiveSettingsTab('ROW_LAYOUT')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer relative ${
+                      activeSettingsTab === 'ROW_LAYOUT'
+                        ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-white hover:bg-slate-900'
                     }`}
                   >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span className="truncate">Logo Xã</span>
+                    <Rows className="w-3.5 h-3.5 text-indigo-300" />
+                    <span className="truncate">Chỉnh Hàng</span>
+                    <span className="text-[9px] px-1 py-0.2 bg-indigo-900/90 text-indigo-200 rounded font-mono hidden md:inline">
+                      {config.roadNameLineMode || 'AUTO'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSettingsTab('COORDINATES')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'COORDINATES'
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <Crosshair className="w-3.5 h-3.5" />
+                    <span className="truncate">Tọa Độ (X,Y)</span>
                   </button>
 
                   <button
@@ -440,8 +451,21 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
 
                   <button
                     type="button"
+                    onClick={() => setActiveSettingsTab('LOGO')}
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                      activeSettingsTab === 'LOGO'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span className="truncate">Logo Xã</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setActiveSettingsTab('ALL')}
-                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer col-span-2 sm:col-span-1 ${
+                    className={`px-2 py-2 rounded-lg font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                       activeSettingsTab === 'ALL'
                         ? 'bg-slate-700 text-white shadow-sm'
                         : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -453,278 +477,672 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                 </div>
               </div>
 
-              {/* PHẦN A: TÙY CHỌN FONT TIÊU ĐỀ & TÊN ĐƯỜNG (Typography) */}
+              {/* PHẦN 1: TÙY CHỌN FONT TIÊU ĐỀ & TÊN ĐƯỜNG (Typography) */}
               {(activeSettingsTab === 'TYPOGRAPHY' || activeSettingsTab === 'ALL') && (
                 <div className="space-y-4 pb-4 border-b border-slate-800">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Type className="w-4 h-4 text-cyan-400" />
-                    <span>Tùy Chọn Font Chữ Biển Báo</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleSyncFonts}
-                    title="Sao chép font tiêu đề sang font tên đường để đồng bộ"
-                    className="text-[11px] text-cyan-300 hover:text-cyan-200 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded cursor-pointer transition"
-                  >
-                    Dùng chung 1 Font
-                  </button>
-                </div>
-
-                {/* 1. Font Tiêu Đề */}
-                <div className="space-y-1.5 bg-slate-950/80 p-3 rounded-lg border border-slate-800">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-200">1. Font Tiêu Đề Cố Định ("{config.titleText}"):</span>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Type className="w-4 h-4 text-cyan-400" />
+                      <span>Tùy Chọn Font Chữ Biển Báo &amp; Tên Đường</span>
+                    </label>
                     <button
                       type="button"
-                      onClick={() => setCustomTitleFontMode(!customTitleFontMode)}
-                      className="text-[10px] text-blue-400 hover:underline cursor-pointer"
+                      onClick={handleSyncFonts}
+                      title="Sao chép font tiêu đề sang font tên đường để đồng bộ"
+                      className="text-[11px] text-cyan-300 hover:text-cyan-200 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded cursor-pointer transition"
                     >
-                      {customTitleFontMode ? 'Chọn từ danh sách' : 'Nhập font tùy ý'}
+                      Dùng chung 1 Font
                     </button>
                   </div>
 
-                  {!customTitleFontMode ? (
-                    <select
-                      value={config.titleFont}
-                      onChange={(e) => onUpdateConfig({ ...config, titleFont: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 font-bold cursor-pointer focus:border-cyan-500 focus:outline-none"
-                    >
-                      {FONT_OPTIONS.map((f) => (
-                        <option key={f.id} value={f.family}>
-                          {f.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={config.titleFont}
-                      onChange={(e) => onUpdateConfig({ ...config, titleFont: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                      placeholder="e.g. 'Montserrat', Arial, sans-serif"
-                    />
-                  )}
+                  {/* 1.1 Font Tiêu Đề Cố Định */}
+                  <div className="space-y-2 bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-200">1. Font Tiêu Đề Cố Định ("{config.titleText}"):</span>
+                      <button
+                        type="button"
+                        onClick={() => setCustomTitleFontMode(!customTitleFontMode)}
+                        className="text-[10px] text-blue-400 hover:underline cursor-pointer"
+                      >
+                        {customTitleFontMode ? 'Chọn từ danh sách' : 'Nhập font tùy ý'}
+                      </button>
+                    </div>
 
-                  {/* Font Sample Preview */}
-                  <div className="pt-1 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-400">Hiển thị mẫu:</span>
-                    <span
-                      style={{ fontFamily: config.titleFont }}
-                      className="font-black text-cyan-300 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40 uppercase"
-                    >
-                      {config.titleText || 'ĐƯỜNG'}
-                    </span>
+                    {!customTitleFontMode ? (
+                      <select
+                        value={config.titleFont}
+                        onChange={(e) => onUpdateConfig({ ...config, titleFont: e.target.value })}
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 font-bold cursor-pointer focus:border-cyan-500 focus:outline-none"
+                      >
+                        {FONT_OPTIONS.map((f) => (
+                          <option key={f.id} value={f.family}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={config.titleFont}
+                        onChange={(e) => onUpdateConfig({ ...config, titleFont: e.target.value })}
+                        className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
+                        placeholder="e.g. 'Montserrat', Arial, sans-serif"
+                      />
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Nội dung chữ:</span>
+                        <input
+                          type="text"
+                          value={config.titleText}
+                          onChange={(e) => onUpdateConfig({ ...config, titleText: e.target.value.toUpperCase() })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white font-bold text-xs rounded px-2 py-1 uppercase"
+                          placeholder="ĐƯỜNG, PHỐ..."
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Chiều cao chữ tiêu đề (mm):</span>
+                        <input
+                          type="number"
+                          value={config.titleHeight || 48}
+                          onChange={(e) => onUpdateConfig({ ...config, titleHeight: Number(e.target.value) || 48 })}
+                          className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-2 py-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 1.2 Font Tên Đường (Nâng cao: Font Family, Font Weight, Letter Spacing, Transform) */}
+                  <div className="space-y-3 bg-slate-950/90 p-3.5 rounded-lg border border-slate-800">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-emerald-300 flex items-center gap-1.5">
+                        <Type className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>2. Font Chữ Tên Đường (ROAD_NAME):</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCustomRoadFontMode(!customRoadFontMode)}
+                        className="text-[10px] text-blue-400 hover:underline cursor-pointer"
+                      >
+                        {customRoadFontMode ? 'Chọn từ danh sách' : 'Nhập font tùy ý'}
+                      </button>
+                    </div>
+
+                    {/* Chọn Font Family */}
+                    {!customRoadFontMode ? (
+                      <select
+                        value={config.roadNameFont}
+                        onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 font-bold cursor-pointer focus:border-emerald-500 focus:outline-none"
+                      >
+                        {FONT_OPTIONS.map((f) => (
+                          <option key={f.id} value={f.family}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={config.roadNameFont}
+                        onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
+                        className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
+                        placeholder="e.g. 'Montserrat', Arial, sans-serif"
+                      />
+                    )}
+
+                    {/* Độ Đậm Font (Font Weight) */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-300 font-bold">Độ đậm nét chữ (Font Weight):</span>
+                        <span className="font-mono text-emerald-300 font-bold">
+                          {config.roadNameFontWeight ?? 900} ({
+                            (config.roadNameFontWeight ?? 900) === 900
+                              ? 'Black / Siêu Đậm'
+                              : (config.roadNameFontWeight ?? 900) === 800
+                              ? 'ExtraBold / Rất Đậm'
+                              : 'Bold / Đậm Vừa'
+                          })
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { val: 900, label: '900 (Black)', desc: 'Siêu đậm chuẩn' },
+                          { val: 800, label: '800 (ExtraBold)', desc: 'Rất đậm' },
+                          { val: 700, label: '700 (Bold)', desc: 'Đậm tiêu chuẩn' },
+                        ].map((w) => (
+                          <button
+                            key={w.val}
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameFontWeight: w.val })}
+                            className={`px-2 py-1.5 rounded text-xs text-center border transition cursor-pointer ${
+                              (config.roadNameFontWeight ?? 900) === w.val
+                                ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 font-black shadow-sm'
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            <div className="font-mono font-bold">{w.label}</div>
+                            <div className="text-[9px] opacity-75">{w.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Giãn Cách Ký Tự (Letter Spacing) */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-300 font-bold">Khoảng cách giữa các chữ (Letter Spacing):</span>
+                        <span className="font-mono text-cyan-300 font-bold">
+                          {(config.roadNameLetterSpacing ?? 0).toFixed(1)} mm
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="range"
+                          min="0"
+                          max="4"
+                          step="0.1"
+                          value={config.roadNameLetterSpacing ?? 0}
+                          onChange={(e) => onUpdateConfig({ ...config, roadNameLetterSpacing: Number(e.target.value) })}
+                          className="flex-1 accent-cyan-400 cursor-pointer"
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameLetterSpacing', -0.1, 0, 4, 0)}
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                            title="Giảm 0.1mm"
+                          >
+                            -0.1
+                          </button>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={config.roadNameLetterSpacing ?? 0}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameLetterSpacing: Number(e.target.value) || 0 })}
+                            className="w-14 bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-1.5 py-1 text-center"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameLetterSpacing', 0.1, 0, 4, 0)}
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                            title="Tăng 0.1mm"
+                          >
+                            +0.1
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Định Dạng Chữ & Màu Chữ */}
+                    <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+                      <div>
+                        <span className="text-slate-300 font-bold block mb-1">Định dạng chữ:</span>
+                        <div className="grid grid-cols-2 gap-1">
+                          <button
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameTransform: 'UPPERCASE' })}
+                            className={`px-2 py-1.5 rounded text-[11px] font-bold border transition ${
+                              (config.roadNameTransform ?? 'UPPERCASE') === 'UPPERCASE'
+                                ? 'bg-cyan-950 border-cyan-500 text-cyan-300'
+                                : 'bg-slate-900 border-slate-800 text-slate-400'
+                            }`}
+                          >
+                            IN HOA
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameTransform: 'ORIGINAL' })}
+                            className={`px-2 py-1.5 rounded text-[11px] font-bold border transition ${
+                              config.roadNameTransform === 'ORIGINAL'
+                                ? 'bg-cyan-950 border-cyan-500 text-cyan-300'
+                                : 'bg-slate-900 border-slate-800 text-slate-400'
+                            }`}
+                          >
+                            Giữ nguyên
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-slate-300 font-bold block mb-1">Màu chữ tên đường:</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={config.roadNameColor || '#ffffff'}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameColor: e.target.value })}
+                            className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent"
+                          />
+                          <input
+                            type="text"
+                            value={config.roadNameColor || '#ffffff'}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameColor: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-2 py-1 uppercase"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quy chuẩn co chữ tên đường (mm) */}
+                    <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                      <span className="text-xs font-bold text-slate-300 block">
+                        Quy chuẩn chiều cao chữ Tên đường (mm):
+                      </span>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <div className="flex justify-between text-slate-400 text-[11px] mb-1">
+                            <span>Mục tiêu (Target):</span>
+                            <span className="font-mono text-emerald-300 font-bold">{config.targetRoadNameHeight}mm</span>
+                          </div>
+                          <input
+                            type="number"
+                            value={config.targetRoadNameHeight}
+                            onChange={(e) => onUpdateConfig({ ...config, targetRoadNameHeight: Number(e.target.value) || 60 })}
+                            className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-2.5 py-1.5"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-slate-400 text-[11px] mb-1">
+                            <span>Tối thiểu (Min):</span>
+                            <span className="font-mono text-amber-300 font-bold">{config.minRoadNameHeight}mm</span>
+                          </div>
+                          <input
+                            type="number"
+                            value={config.minRoadNameHeight}
+                            onChange={(e) => onUpdateConfig({ ...config, minRoadNameHeight: Number(e.target.value) || 32 })}
+                            className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-2.5 py-1.5"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Preview Box */}
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400">Hiển thị mẫu thử:</span>
+                      <div
+                        style={{
+                          fontFamily: config.roadNameFont,
+                          fontWeight: config.roadNameFontWeight ?? 900,
+                          letterSpacing: `${config.roadNameLetterSpacing ?? 0}mm`,
+                          color: config.roadNameColor || '#ffffff',
+                        }}
+                        className="bg-slate-900 px-3 py-1 rounded border border-slate-700 uppercase truncate max-w-[280px]"
+                      >
+                        {sampleRoadName || 'DX.813'}
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* 2. Font Tên Đường */}
-                <div className="space-y-1.5 bg-slate-950/80 p-3 rounded-lg border border-slate-800">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-200">2. Font Tên Đường ("{sampleRoadName}"):</span>
-                    <button
-                      type="button"
-                      onClick={() => setCustomRoadFontMode(!customRoadFontMode)}
-                      className="text-[10px] text-blue-400 hover:underline cursor-pointer"
-                    >
-                      {customRoadFontMode ? 'Chọn từ danh sách' : 'Nhập font tùy ý'}
-                    </button>
-                  </div>
-
-                  {!customRoadFontMode ? (
-                    <select
-                      value={config.roadNameFont}
-                      onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 font-bold cursor-pointer focus:border-cyan-500 focus:outline-none"
-                    >
-                      {FONT_OPTIONS.map((f) => (
-                        <option key={f.id} value={f.family}>
-                          {f.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={config.roadNameFont}
-                      onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                      placeholder="e.g. 'Montserrat', Arial, sans-serif"
-                    />
-                  )}
-
-                  {/* Font Sample Preview */}
-                  <div className="pt-1 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-400">Hiển thị mẫu:</span>
-                    <span
-                      style={{ fontFamily: config.roadNameFont }}
-                      className="font-black text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40 uppercase"
-                    >
-                      {sampleRoadName || 'DX.813'}
-                    </span>
-                  </div>
-                </div>
-              </div>
               )}
 
-              {/* PHẦN B & C: Màu nền biển & Khung viền nghệ thuật (FRAME_STYLE) */}
+              {/* PHẦN 2: TÙY CHỈNH HÀNG & BỐ CỤC DÒNG (ROW_LAYOUT) */}
+              {(activeSettingsTab === 'ROW_LAYOUT' || activeSettingsTab === 'ALL') && (
+                <div className="space-y-4 pb-4 border-b border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Rows className="w-4 h-4 text-indigo-400" />
+                      <span>Tùy Chỉnh Hàng &amp; Bố Cục Dòng Tên Đường</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/40">
+                      {liveFit.lines.length} Hàng ({liveFit.status})
+                    </span>
+                  </div>
+
+                  {/* 2.1 Chế Độ Phân Hàng (Line Mode) */}
+                  <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200">1. Chế Độ Phân Hàng (Line Mode):</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Hiện tại: <strong className="text-indigo-300">{config.roadNameLineMode || 'AUTO'}</strong>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {[
+                        {
+                          id: 'AUTO' as const,
+                          title: 'Tự Động Thông Minh',
+                          desc: 'Tự ngắt 2 hàng nếu tên đường dài hoặc nhiều từ; giữ 1 hàng nếu ngắn vừa vặn.',
+                          color: 'border-emerald-500 text-emerald-300 bg-emerald-950/40',
+                        },
+                        {
+                          id: 'SINGLE' as const,
+                          title: 'Cố Định 1 Hàng',
+                          desc: 'Luôn giữ trên 1 hàng ngang duy nhất. Tự động thu nhỏ cỡ chữ để vừa khung.',
+                          color: 'border-cyan-500 text-cyan-300 bg-cyan-950/40',
+                        },
+                        {
+                          id: 'TWO_LINES' as const,
+                          title: 'Ép Buộc 2 Hàng',
+                          desc: 'Luôn chia tên đường thành 2 hàng trên dưới để chữ to và cân xứng hơn.',
+                          color: 'border-purple-500 text-purple-300 bg-purple-950/40',
+                        },
+                      ].map((mode) => {
+                        const isSelected = (config.roadNameLineMode || 'AUTO') === mode.id;
+                        return (
+                          <button
+                            key={mode.id}
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameLineMode: mode.id })}
+                            className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex flex-col justify-between ${
+                              isSelected
+                                ? `${mode.color} shadow-sm ring-1 ring-white/20`
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-black">{mode.title}</span>
+                              {isSelected && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                            </div>
+                            <p className="text-[10px] leading-tight opacity-80">{mode.desc}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 2.2 Căn Lề Dòng (Alignment) */}
+                  <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-200">2. Căn Lề Dòng (Text Alignment):</span>
+                      <span className="text-[10px] font-mono text-cyan-300 font-bold uppercase">
+                        {config.roadNameAlign || 'center'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'left' as const, label: 'Căn Trái', icon: AlignLeft },
+                        { id: 'center' as const, label: 'Căn Giữa (Chuẩn)', icon: AlignCenter },
+                        { id: 'right' as const, label: 'Căn Phải', icon: AlignRight },
+                      ].map((al) => {
+                        const isSelected = (config.roadNameAlign || 'center') === al.id;
+                        const Icon = al.icon;
+                        return (
+                          <button
+                            key={al.id}
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameAlign: al.id })}
+                            className={`px-3 py-2 rounded-lg border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-950 border-indigo-500 text-indigo-300 shadow-sm'
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            <span>{al.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 2.3 Khoảng Cách Hàng & Chiều Cao Chữ 2 Hàng */}
+                  <div className="bg-slate-950/80 p-3.5 rounded-lg border border-slate-800 space-y-3">
+                    <span className="text-xs font-bold text-slate-200 block">
+                      3. Khoảng Cách &amp; Kích Thước Khi Hiển Thị 2 Hàng:
+                    </span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {/* Khoảng cách hàng (Line Spacing) */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-slate-300 text-[11px]">
+                          <span>Khoảng cách giữa 2 hàng:</span>
+                          <span className="font-mono text-cyan-300 font-bold">
+                            {(config.roadNameLineSpacing ?? 10).toFixed(1)} mm
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="range"
+                            min="2"
+                            max="24"
+                            step="0.5"
+                            value={config.roadNameLineSpacing ?? 10}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameLineSpacing: Number(e.target.value) })}
+                            className="flex-1 accent-indigo-400 cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameLineSpacing', -1, 2, 24, 10)}
+                            className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                          >
+                            -1
+                          </button>
+                          <input
+                            type="number"
+                            value={config.roadNameLineSpacing ?? 10}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameLineSpacing: Number(e.target.value) || 10 })}
+                            className="w-12 bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-1 py-1 text-center"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameLineSpacing', 1, 2, 24, 10)}
+                            className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                          >
+                            +1
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Chiều cao chữ mục tiêu 2 hàng (roadNameTarget2LineHeight) */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-slate-300 text-[11px]">
+                          <span>Chiều cao chữ khi 2 hàng:</span>
+                          <span className="font-mono text-purple-300 font-bold">
+                            {(config.roadNameTarget2LineHeight ?? 38).toFixed(1)} mm
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="range"
+                            min="24"
+                            max="48"
+                            step="0.5"
+                            value={config.roadNameTarget2LineHeight ?? 38}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameTarget2LineHeight: Number(e.target.value) })}
+                            className="flex-1 accent-purple-400 cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameTarget2LineHeight', -1, 24, 48, 38)}
+                            className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                          >
+                            -1
+                          </button>
+                          <input
+                            type="number"
+                            value={config.roadNameTarget2LineHeight ?? 38}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameTarget2LineHeight: Number(e.target.value) || 38 })}
+                            className="w-12 bg-slate-900 border border-slate-700 text-white font-mono text-xs rounded px-1 py-1 text-center"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => adjustVal('roadNameTarget2LineHeight', 1, 24, 48, 38)}
+                            className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono font-bold"
+                          >
+                            +1
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2.4 Bảng Phân Tích Dòng Trực Tiếp & Mẹo Ngắt Dòng */}
+                  <div className="bg-slate-950 p-3.5 rounded-lg border border-indigo-900/40 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                        <Split className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Bảng Phân Tích Dòng Thực Tế &amp; Mẹo Ngắt Dòng:</span>
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                          liveFit.status === 'OK'
+                            ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                            : liveFit.status === 'SCALED'
+                            ? 'bg-amber-950/80 text-amber-400 border-amber-800'
+                            : 'bg-rose-950/80 text-rose-400 border-rose-800'
+                        }`}
+                      >
+                        {liveFit.status === 'OK'
+                          ? 'Vừa vặn chuẩn'
+                          : liveFit.status === 'SCALED'
+                          ? 'Đã co nhỏ'
+                          : 'Cảnh báo vượt khổ'}
+                      </span>
+                    </div>
+
+                    {/* Danh sách dòng nội dung */}
+                    <div className="space-y-1 text-xs">
+                      {liveFit.lines.map((line, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800 font-mono"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
+                              Hàng {idx + 1}
+                            </span>
+                            <span className="text-white font-bold truncate">{line}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 shrink-0 ml-2">
+                            Y = <span className="text-emerald-300 font-bold">{liveFit.lineYPositions[idx]?.toFixed(1)}</span> mm
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-800">
+                      <span>Cỡ chữ thực tế: <strong className="text-white font-mono">{liveFit.fontSize}px</strong> (~{liveFit.textHeight}mm)</span>
+                      <span>Chiều rộng nội dung: <strong className="text-cyan-300 font-mono">{Math.round(liveFit.textWidth)}mm</strong> / {config.availableWidth}mm</span>
+                    </div>
+
+                    {/* Mẹo ngắt dòng chủ động */}
+                    <div className="pt-2 border-t border-slate-800 space-y-1.5 text-xs text-slate-400">
+                      <div className="text-[11px] font-bold text-slate-300">
+                        💡 Mẹo ngắt dòng theo ý đồ thiết kế:
+                      </div>
+                      <p className="text-[11px] leading-relaxed">
+                        Bạn có thể dùng ký tự <code className="text-indigo-300 bg-slate-900 px-1 py-0.5 rounded font-mono">|</code> hoặc{' '}
+                        <code className="text-indigo-300 bg-slate-900 px-1 py-0.5 rounded font-mono">//</code> trong tên đường để tách hàng chính xác ở bất kỳ vị trí nào:
+                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        {[
+                          'NGUYỄN HUỆ | THỊ TRẤN DIÊN SANH',
+                          'ĐƯỜNG LIÊN THÔN // TRUNG AN',
+                          'KHU PHỐ 2 // THỊ TRẤN DIÊN SANH',
+                        ].map((ex) => (
+                          <button
+                            key={ex}
+                            type="button"
+                            onClick={() => setSampleRoadName(ex)}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-700 transition"
+                          >
+                            + Thử: "{ex}"
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PHẦN 3: Màu nền biển & Khung viền nghệ thuật (FRAME_STYLE) */}
               {(activeSettingsTab === 'FRAME_STYLE' || activeSettingsTab === 'ALL') && (
-                <div className="space-y-4 pt-2 border-t border-slate-800">
-                  {/* PHẦN B: Màu nền biển */}
+                <div className="space-y-4 pb-4 border-b border-slate-800">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                       <Palette className="w-3.5 h-3.5 text-blue-400" />
                       <span>Màu Nền Biển (Background Color):</span>
                     </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={config.backgroundColor}
-                    onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
-                    className="w-10 h-10 rounded border border-slate-700 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={config.backgroundColor}
-                    onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
-                    className="flex-1 bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-3 py-2 uppercase"
-                  />
-                </div>
-                {/* Màu mẫu nhanh */}
-                <div className="flex items-center gap-2 pt-1 flex-wrap">
-                  <span className="text-[11px] text-slate-400">Gợi ý:</span>
-                  {[
-                    { label: 'Navy V4.0', color: '#00479e' },
-                    { label: 'Xanh Đậm', color: '#003366' },
-                    { label: 'Xanh Lá', color: '#006633' },
-                    { label: 'Xám Đen', color: '#1e293b' },
-                  ].map((p) => (
-                    <button
-                      key={p.color}
-                      type="button"
-                      onClick={() => onUpdateConfig({ ...config, backgroundColor: p.color })}
-                      className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer flex items-center gap-1"
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                      <span>{p.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* PHẦN C: Khung viền nghệ thuật khuyết góc */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Khung Viền Nghệ Thuật Khuyết 4 Góc:</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Màu viền:</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <input
                         type="color"
-                        value={config.borderColor}
-                        onChange={(e) => onUpdateConfig({ ...config, borderColor: e.target.value })}
-                        className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent"
+                        value={config.backgroundColor}
+                        onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
+                        className="w-10 h-10 rounded border border-slate-700 cursor-pointer bg-transparent"
                       />
-                      <span className="font-mono text-xs text-white">{config.borderColor}</span>
+                      <input
+                        type="text"
+                        value={config.backgroundColor}
+                        onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
+                        className="flex-1 bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-3 py-2 uppercase"
+                      />
+                    </div>
+                    {/* Màu mẫu nhanh */}
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <span className="text-[11px] text-slate-400">Gợi ý:</span>
+                      {[
+                        { label: 'Navy V4.0', color: '#00479e' },
+                        { label: 'Xanh Đậm', color: '#003366' },
+                        { label: 'Xanh Lá', color: '#006633' },
+                        { label: 'Xám Đen', color: '#1e293b' },
+                      ].map((p) => (
+                        <button
+                          key={p.color}
+                          type="button"
+                          onClick={() => onUpdateConfig({ ...config, backgroundColor: p.color })}
+                          className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer flex items-center gap-1"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                          <span>{p.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Độ thụt lề (mm):</span>
-                    <input
-                      type="number"
-                      value={config.borderInset}
-                      onChange={(e) => onUpdateConfig({ ...config, borderInset: Number(e.target.value) || 13 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Độ dày viền (mm):</span>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={config.borderThickness}
-                      onChange={(e) => onUpdateConfig({ ...config, borderThickness: Number(e.target.value) || 3.5 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Bo khuyết góc (r mm):</span>
-                    <input
-                      type="number"
-                      value={config.cornerNotchRadius}
-                      onChange={(e) => onUpdateConfig({ ...config, cornerNotchRadius: Number(e.target.value) || 16 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            )}
 
-            {/* PHẦN D & E: Tiêu đề cố định & kích thước & dung sai tên đường (TYPOGRAPHY) */}
-            {(activeSettingsTab === 'TYPOGRAPHY' || activeSettingsTab === 'ALL') && (
-              <div className="space-y-4 pt-2 border-t border-slate-800">
-                {/* PHẦN D: Tiêu đề cố định & kích thước */}
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <Type className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Nội Dung Tiêu Đề Cố Định:</span>
-                  </label>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Nội dung chữ:</span>
-                    <input
-                      type="text"
-                      value={config.titleText}
-                      onChange={(e) => onUpdateConfig({ ...config, titleText: e.target.value.toUpperCase() })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-bold text-xs rounded-lg px-2.5 py-1.5 uppercase"
-                      placeholder="ĐƯỜNG, PHỐ..."
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Chiều cao chữ (mm):</span>
-                    <input
-                      type="number"
-                      value={config.titleHeight || 48}
-                      onChange={(e) => onUpdateConfig({ ...config, titleHeight: Number(e.target.value) || 48 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* PHẦN E: Dung sai Tên đường */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Quy Chuẩn Co Chữ Tên Đường (mm):</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Mục tiêu (Target):</span>
-                    <input
-                      type="number"
-                      value={config.targetRoadNameHeight}
-                      onChange={(e) => onUpdateConfig({ ...config, targetRoadNameHeight: Number(e.target.value) || 60 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[11px] block mb-1">Tối thiểu (Min):</span>
-                    <input
-                      type="number"
-                      value={config.minRoadNameHeight}
-                      onChange={(e) => onUpdateConfig({ ...config, minRoadNameHeight: Number(e.target.value) || 32 })}
-                      className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                    />
+                  {/* Khung viền nghệ thuật khuyết 4 góc */}
+                  <div className="space-y-3 pt-2 border-t border-slate-800">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Khung Viền Nghệ Thuật Khuyết 4 Góc:</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Màu viền:</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={config.borderColor}
+                            onChange={(e) => onUpdateConfig({ ...config, borderColor: e.target.value })}
+                            className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent"
+                          />
+                          <span className="font-mono text-xs text-white">{config.borderColor}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Độ thụt lề (mm):</span>
+                        <input
+                          type="number"
+                          value={config.borderInset}
+                          onChange={(e) => onUpdateConfig({ ...config, borderInset: Number(e.target.value) || 13 })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Độ dày viền (mm):</span>
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={config.borderThickness}
+                          onChange={(e) => onUpdateConfig({ ...config, borderThickness: Number(e.target.value) || 3.5 })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[11px] block mb-1">Bo khuyết góc (r mm):</span>
+                        <input
+                          type="number"
+                          value={config.cornerNotchRadius}
+                          onChange={(e) => onUpdateConfig({ ...config, cornerNotchRadius: Number(e.target.value) || 16 })}
+                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            )}
+              )}
 
             {/* PHẦN F: Logo Xã / Biểu trưng (LOGO) */}
             {(activeSettingsTab === 'LOGO' || activeSettingsTab === 'ALL') && (
@@ -1123,10 +1541,22 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                       {config.titleFont}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-1">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-800">
                     <span className="text-slate-400">Font Tên Đường:</span>
                     <span className="font-bold text-emerald-300 truncate max-w-[200px]" title={config.roadNameFont}>
                       {config.roadNameFont}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-800">
+                    <span className="text-slate-400">Độ dày &amp; Khoảng cách chữ:</span>
+                    <span className="font-mono text-white font-bold">
+                      {config.roadNameFontWeight || '900'} | {config.roadNameLetterSpacing || 0}mm
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-slate-400">Chế độ hàng &amp; Căn dòng:</span>
+                    <span className="font-bold text-cyan-300">
+                      {config.roadNameLineMode === 'TWO_LINES' ? 'Bắt buộc 2 hàng' : config.roadNameLineMode === 'SINGLE' ? 'Luôn 1 hàng' : 'Tự động (1 hoặc 2)'} ({config.roadNameAlign || 'center'})
                     </span>
                   </div>
                 </div>

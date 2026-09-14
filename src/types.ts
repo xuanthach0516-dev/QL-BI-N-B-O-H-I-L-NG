@@ -58,11 +58,22 @@ export interface MasterConfig {
   titleY?: number; // mm (tọa độ Y tiêu đề, mặc định 126)
   roadNameColor: string; // #ffffff
   roadNameFont: string; // 'Montserrat, sans-serif'
+  roadNameFontWeight?: '700' | '800' | '900'; // Độ đậm font tên đường (mặc định 900)
+  roadNameLetterSpacing?: number; // mm giãn cách ký tự (mặc định 0.5)
+  roadNameTransform?: 'UPPERCASE' | 'ORIGINAL'; // In hoa hay giữ nguyên (mặc định UPPERCASE)
   targetRoadNameHeight: number; // mm (60)
   minRoadNameHeight: number; // mm (32)
   availableWidth: number; // mm (440)
   roadNameX?: number; // mm (tọa độ tâm X tên đường, mặc định 250)
   roadNameY?: number; // mm (tọa độ tâm Y tên đường, mặc định 230)
+  
+  // TÙY CHỈNH HÀNG (LINE / ROW LAYOUT)
+  roadNameLineMode?: 'SINGLE' | 'AUTO' | 'TWO_LINES'; // Chế độ: 1 hàng, tự động ngắt nếu dài, hoặc 2 hàng
+  roadNameLineSpacing?: number; // mm khoảng cách giữa các hàng (mặc định 10mm)
+  roadNameAlign?: 'center' | 'left' | 'right'; // Căn lề hàng: giữa, trái, phải
+  roadNameTarget2LineHeight?: number; // mm chiều cao chữ mục tiêu khi 2 hàng (mặc định 38mm)
+  roadNameAutoSplitMinWords?: number; // Số từ tối thiểu để tự ngắt hàng (mặc định 3)
+  
   logoType: 'vector' | 'custom';
   customLogoUrl?: string;
   logoX?: number; // mm (tọa độ tâm X logo, mặc định 110)
@@ -82,6 +93,12 @@ export interface FitRoadNameResult {
   y: number;
   status: FitStatus;
   scaleRatio: number;
+  lines: string[];
+  lineYPositions: number[];
+  lineSpacing: number;
+  alignment: 'center' | 'left' | 'right';
+  letterSpacing: number;
+  fontWeight: string;
 }
 
 export interface BatchSummary {

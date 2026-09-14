@@ -1,4 +1,4 @@
-import { SignItem, SignStatus, FitStatus } from '../types';
+import { SignItem, SignStatus, FitStatus, MasterConfig } from '../types';
 import { fitRoadName } from './fitRoadName';
 
 export interface QcReport {
@@ -17,7 +17,7 @@ export interface QcReport {
 /**
  * Kiểm tra tính hợp lệ của chuỗi Unicode tiếng Việt
  */
-export function checkVietnameseUnicode(text: string): { isValid: boolean; issue?: string } {
+export function checkVietnameseUnicode(text: string, allowNewlines: boolean = false): { isValid: boolean; issue?: string } {
   if (!text) return { isValid: true };
 
   // 1. Kiểm tra ký tự lỗi encoding thường gặp:  (U+FFFD), dấu chấm hỏi lẻ loi, font vỡ
@@ -30,9 +30,9 @@ export function checkVietnameseUnicode(text: string): { isValid: boolean; issue?
     return { isValid: false, issue: 'Nghi vấn mất dấu tiếng Việt (chứa dấu hỏi ? trong từ)' };
   }
 
-  // 3. Kiểm tra ký tự xuống dòng (yêu cầu không xuống dòng)
-  if (/[\r\n]/.test(text)) {
-    return { isValid: false, issue: 'Có ký tự xuống dòng (Tên đường chỉ được trên 1 dòng)' };
+  // 3. Kiểm tra ký tự xuống dòng nếu không cho phép xuống dòng
+  if (!allowNewlines && /[\r\n]/.test(text)) {
+    return { isValid: false, issue: 'Có ký tự xuống dòng (Cần chọn chế độ nhiều hàng để cho phép)' };
   }
 
   return { isValid: true };
@@ -43,7 +43,8 @@ export function checkVietnameseUnicode(text: string): { isValid: boolean; issue?
  */
 export function runSignQc(
   item: Partial<SignItem>,
-  allSigns?: SignItem[]
+  allSigns?: SignItem[],
+  masterConfig?: MasterConfig
 ): {
   status: SignStatus;
   fitStatus: FitStatus;
@@ -72,18 +73,19 @@ export function runSignQc(
   }
 
   // 2. Kiểm tra Unicode tiếng Việt
-  const unicodeCheck = checkVietnameseUnicode(rawTenDuong);
+  const allowNewlines = (masterConfig?.roadNameLineMode ?? 'AUTO') !== 'SINGLE';
+  const unicodeCheck = checkVietnameseUnicode(rawTenDuong, allowNewlines);
   if (!unicodeCheck.isValid) {
     errors.push(`Lỗi Unicode/font: ${unicodeCheck.issue}`);
   }
 
   // 3. Auto fit & kiểm tra kích thước chữ
-  const fit = fitRoadName(rawTenDuong, 440, 60, 32);
+  const fit = fitRoadName(rawTenDuong, masterConfig || 440);
 
   if (fit.status === 'EMPTY') {
     // Đã bắt ở trên
   } else if (fit.status === 'TOO_LONG') {
-    errors.push(`Tên đường quá dài (${fit.textWidth}mm > 440mm ở font tối thiểu). Yêu cầu kiểm tra & rút gọn.`);
+    errors.push(`Tên đường quá dài (${fit.textWidth}mm > ${masterConfig?.availableWidth ?? 440}mm ở font tối thiểu). Yêu cầu kiểm tra & rút gọn.`);
   } else if (fit.status === 'SCALED') {
     warnings.push(`Chữ được tự động co nhỏ font ${fit.fontSize}px (chiều cao ${fit.textHeight}mm) để vừa khung`);
   }

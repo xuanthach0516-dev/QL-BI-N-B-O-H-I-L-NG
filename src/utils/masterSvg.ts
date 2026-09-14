@@ -17,11 +17,19 @@ export const DEFAULT_MASTER_CONFIG: MasterConfig = {
   titleY: 126, // mm (tọa độ Y tiêu đề)
   roadNameColor: '#ffffff',
   roadNameFont: 'Montserrat, Arial, sans-serif',
+  roadNameFontWeight: '900', // 700, 800, 900
+  roadNameLetterSpacing: 0.5, // mm
+  roadNameTransform: 'UPPERCASE',
   targetRoadNameHeight: 60,
   minRoadNameHeight: 32,
   availableWidth: 440,
   roadNameX: 250, // mm (tọa độ tâm ngang X tên đường)
   roadNameY: 230, // mm (tọa độ tâm dọc Y tên đường)
+  roadNameLineMode: 'AUTO', // 'SINGLE' | 'AUTO' | 'TWO_LINES'
+  roadNameLineSpacing: 10, // mm khoảng cách giữa các hàng
+  roadNameAlign: 'center', // 'center' | 'left' | 'right'
+  roadNameTarget2LineHeight: 38, // mm chiều cao chữ mục tiêu khi 2 hàng
+  roadNameAutoSplitMinWords: 3,
   logoType: 'vector',
   logoX: 110, // mm (tọa độ tâm X logo)
   logoY: 96,  // mm (tọa độ tâm Y logo)
@@ -139,13 +147,10 @@ export function generateMasterArtworkSvg(
 
   const fit = fitRoadName(
     roadName,
-    config.availableWidth,
-    config.targetRoadNameHeight,
-    config.minRoadNameHeight,
-    config.roadNameFont,
-    roadNameX,
-    roadNameY
+    config
   );
+
+  const textAnchor = fit.alignment === 'left' ? 'start' : fit.alignment === 'right' ? 'end' : 'middle';
 
   const borderPath = generateBorderPath(
     ARTWORK_WIDTH,
@@ -174,8 +179,9 @@ export function generateMasterArtworkSvg(
       }
       .road-name-text {
         font-family: ${config.roadNameFont};
-        font-weight: 900;
-        fill: ${config.roadNameColor};
+        font-weight: ${config.roadNameFontWeight || '900'};
+        fill: ${config.roadNameColor || '#ffffff'};
+        ${(config.roadNameLetterSpacing !== undefined && config.roadNameLetterSpacing !== 0) ? `letter-spacing: ${config.roadNameLetterSpacing}px;` : ''}
       }
     </style>
   </defs>
@@ -204,17 +210,20 @@ export function generateMasterArtworkSvg(
     ${config.titleText}
   </text>
 
-  <!-- 5. TÊN ĐƯỜNG AUTO-FIT CHUẨN TỶ LỆ (KHÔNG BÓP MÉO) -->
+  <!-- 5. TÊN ĐƯỜNG AUTO-FIT CHUẨN TỶ LỆ & TÙY CHỈNH HÀNG -->
   <text id="ROAD_NAME"
         class="road-name-text"
-        x="${fit.x}"
-        y="${fit.y}"
         font-size="${fit.fontSize}px"
-        text-anchor="middle"
+        text-anchor="${textAnchor}"
         data-fit-status="${fit.status}"
         data-text-width="${fit.textWidth}"
-        data-text-height="${fit.textHeight}">
-    ${roadName}
+        data-text-height="${fit.textHeight}"
+        data-lines-count="${fit.lines.length}">
+    ${fit.lines.length === 1 ? `
+      <tspan x="${fit.x}" y="${fit.y}">${fit.lines[0]}</tspan>
+    ` : fit.lines.map((line, idx) => `
+      <tspan x="${fit.x}" y="${fit.lineYPositions[idx]}">${line}</tspan>
+    `).join('')}
   </text>
 </svg>`.trim();
 }
@@ -249,13 +258,10 @@ export function generateAssemblyViewSvg(
 
   const fit = fitRoadName(
     roadName,
-    config.availableWidth,
-    config.targetRoadNameHeight,
-    config.minRoadNameHeight,
-    config.roadNameFont,
-    roadNameX,
-    roadNameY
+    config
   );
+
+  const textAnchor = fit.alignment === 'left' ? 'start' : fit.alignment === 'right' ? 'end' : 'middle';
 
   const borderPath = generateBorderPath(
     ARTWORK_WIDTH,
@@ -283,8 +289,9 @@ export function generateAssemblyViewSvg(
       }
       .road-name-text {
         font-family: ${config.roadNameFont};
-        font-weight: 900;
-        fill: ${config.roadNameColor};
+        font-weight: ${config.roadNameFontWeight || '900'};
+        fill: ${config.roadNameColor || '#ffffff'};
+        ${(config.roadNameLetterSpacing !== undefined && config.roadNameLetterSpacing !== 0) ? `letter-spacing: ${config.roadNameLetterSpacing}px;` : ''}
       }
       .dim-text {
         font-family: 'Plus Jakarta Sans', Arial, sans-serif;
@@ -355,14 +362,16 @@ export function generateAssemblyViewSvg(
       ${config.titleText}
     </text>
 
-    <!-- Tên đường (Tùy chỉnh vị trí) -->
+    <!-- Tên đường (Tùy chỉnh vị trí & Hàng) -->
     <text id="ROAD_NAME"
           class="road-name-text"
-          x="${fit.x}"
-          y="${fit.y}"
           font-size="${fit.fontSize}px"
-          text-anchor="middle">
-      ${roadName}
+          text-anchor="${textAnchor}">
+      ${fit.lines.length === 1 ? `
+        <tspan x="${fit.x}" y="${fit.y}">${fit.lines[0]}</tspan>
+      ` : fit.lines.map((line, idx) => `
+        <tspan x="${fit.x}" y="${fit.lineYPositions[idx]}">${line}</tspan>
+      `).join('')}
     </text>
   </g>
 

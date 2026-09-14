@@ -2,5 +2,7 @@
   "name": "Quản Lý & Sản Xuất Biển Tên Đường Hải Lăng",
   "description": "Hệ thống chuyên nghiệp quản lý, kiểm định QC và sản xuất hàng loạt biển tên đường Hải Lăng chuẩn in 500x300mm và cụm lắp nẹp 530x300mm.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
