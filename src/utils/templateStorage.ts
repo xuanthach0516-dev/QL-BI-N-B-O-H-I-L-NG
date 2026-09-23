@@ -33,6 +33,7 @@ export function loadSavedMasterConfig(): MasterConfig {
       borderInset: Number(parsed.borderInset) || DEFAULT_MASTER_CONFIG.borderInset,
       borderThickness: Number(parsed.borderThickness) || DEFAULT_MASTER_CONFIG.borderThickness,
       cornerNotchRadius: Number(parsed.cornerNotchRadius) || DEFAULT_MASTER_CONFIG.cornerNotchRadius,
+      cornerStyle: (['CONCAVE', 'ROUNDED', 'RECTANGULAR'].includes(parsed.cornerStyle) ? parsed.cornerStyle : DEFAULT_MASTER_CONFIG.cornerStyle) || 'CONCAVE',
       titleHeight: Number(parsed.titleHeight) || DEFAULT_MASTER_CONFIG.titleHeight,
       titleX: Number(parsed.titleX ?? DEFAULT_MASTER_CONFIG.titleX),
       titleY: Number(parsed.titleY ?? DEFAULT_MASTER_CONFIG.titleY),

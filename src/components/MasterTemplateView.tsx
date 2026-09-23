@@ -49,6 +49,10 @@ import {
   parseAndValidateConfigJson,
   getLastSavedTimestamp,
 } from '../utils/templateStorage';
+import { PrecisionNudgeBar, SelectableElement } from './PrecisionNudgeBar';
+import { InteractiveSignCanvasOverlay } from './InteractiveSignCanvasOverlay';
+import { SmartBorderCornerEditor } from './SmartBorderCornerEditor';
+import { SmartLayoutPresets } from './SmartLayoutPresets';
 
 interface MasterTemplateViewProps {
   config: MasterConfig;
@@ -112,6 +116,22 @@ export const FONT_OPTIONS = [
     desc: 'Tối ưu khoa học giúp người lái xe nhận diện nhanh từ khoảng cách xa',
     badge: 'Đọc Xa',
   },
+  {
+    id: 'inter',
+    label: 'Inter (Quốc Tế Hiện Đại)',
+    family: 'Inter, sans-serif',
+    previewName: 'Inter Display',
+    desc: 'Thiết kế giao diện siêu chuẩn, sắc nét trên mọi cự ly và chất liệu in',
+    badge: 'Sắc Nét',
+  },
+  {
+    id: 'barlow-condensed',
+    label: 'Barlow Condensed (Giao Thông Đô Thị)',
+    family: '"Barlow Condensed", sans-serif',
+    previewName: 'Barlow Cond',
+    desc: 'Được lấy cảm hứng từ biển chỉ dẫn công cộng California, nét gọn gàng',
+    badge: 'Đô Thị',
+  },
 ];
 
 export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
@@ -131,8 +151,18 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
   const [activeSettingsTab, setActiveSettingsTab] = useState<'TYPOGRAPHY' | 'ROW_LAYOUT' | 'COORDINATES' | 'LOGO' | 'FRAME_STYLE' | 'ALL'>('TYPOGRAPHY');
   const [layoutMode, setLayoutMode] = useState<'SPLIT' | 'PREVIEW_TOP'>('SPLIT');
   const [saveStatusMsg, setSaveStatusMsg] = useState<string | null>(null);
+  
+  // Tương tác trực quan kéo thả & D-Pad
+  const [selectedElement, setSelectedElement] = useState<SelectableElement>('LOGO');
+  const [nudgeStep, setNudgeStep] = useState<number>(1.0);
+  const [enableInteractiveCanvas, setEnableInteractiveCanvas] = useState<boolean>(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSelectElementWithTabSync = (el: SelectableElement) => {
+    setSelectedElement(el);
+  };
 
   const logoX = config.logoX ?? 110;
   const logoY = config.logoY ?? 96;
@@ -711,19 +741,58 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                       </button>
                     </div>
 
-                    {/* Chọn Font Family */}
+                    {/* Chọn Font Family Trực Quan */}
                     {!customRoadFontMode ? (
-                      <select
-                        value={config.roadNameFont}
-                        onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
-                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 font-bold cursor-pointer focus:border-emerald-500 focus:outline-none"
-                      >
-                        {FONT_OPTIONS.map((f) => (
-                          <option key={f.id} value={f.family}>
-                            {f.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {FONT_OPTIONS.map((f) => {
+                            const isSelected = config.roadNameFont === f.family;
+                            return (
+                              <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => onUpdateConfig({ ...config, roadNameFont: f.family })}
+                                className={`p-2 rounded-lg border text-left transition cursor-pointer flex flex-col justify-between ${
+                                  isSelected
+                                    ? 'bg-emerald-950/80 border-emerald-500 shadow-sm ring-1 ring-emerald-400/50'
+                                    : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                    isSelected ? 'bg-emerald-500/30 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'
+                                  }`}>
+                                    {f.badge}
+                                  </span>
+                                  {isSelected && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+                                </div>
+                                <div
+                                  className="text-xs font-black truncate text-white my-1"
+                                  style={{ fontFamily: f.family }}
+                                >
+                                  {sampleRoadName || 'DX.813'}
+                                </div>
+                                <div className="text-[10px] text-slate-400 truncate">{f.previewName}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 pt-1">
+                          <span className="text-[11px] text-slate-400 shrink-0">Danh sách đầy đủ:</span>
+                          <select
+                            value={config.roadNameFont}
+                            onChange={(e) => onUpdateConfig({ ...config, roadNameFont: e.target.value })}
+                            className="flex-1 bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 font-bold cursor-pointer focus:border-emerald-500 focus:outline-none"
+                          >
+                            {FONT_OPTIONS.map((f) => (
+                              <option key={f.id} value={f.family}>
+                                {f.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     ) : (
                       <input
                         type="text"
@@ -1109,6 +1178,32 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                         </div>
                       </div>
                     </div>
+
+                    {/* Ngưỡng số từ tự động ngắt 2 hàng */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+                      <div className="flex justify-between text-slate-300 text-[11px]">
+                        <span>Số từ tối thiểu để tự động ngắt 2 hàng (Khi bật Tự Động):</span>
+                        <span className="font-mono text-emerald-300 font-bold">
+                          ≥ {config.roadNameAutoSplitMinWords ?? 3} từ
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[2, 3, 4, 5].map((words) => (
+                          <button
+                            key={words}
+                            type="button"
+                            onClick={() => onUpdateConfig({ ...config, roadNameAutoSplitMinWords: words })}
+                            className={`flex-1 py-1.5 rounded text-xs font-mono font-bold border transition cursor-pointer ${
+                              (config.roadNameAutoSplitMinWords ?? 3) === words
+                                ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/30'
+                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            ≥ {words} từ
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* 2.4 Bảng Phân Tích Dòng Trực Tiếp & Mẹo Ngắt Dòng */}
@@ -1193,96 +1288,11 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
               {/* PHẦN 3: Màu nền biển & Khung viền nghệ thuật (FRAME_STYLE) */}
               {(activeSettingsTab === 'FRAME_STYLE' || activeSettingsTab === 'ALL') && (
                 <div className="space-y-4 pb-4 border-b border-slate-800">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Màu Nền Biển (Background Color):</span>
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={config.backgroundColor}
-                        onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
-                        className="w-10 h-10 rounded border border-slate-700 cursor-pointer bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={config.backgroundColor}
-                        onChange={(e) => onUpdateConfig({ ...config, backgroundColor: e.target.value })}
-                        className="flex-1 bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-3 py-2 uppercase"
-                      />
-                    </div>
-                    {/* Màu mẫu nhanh */}
-                    <div className="flex items-center gap-2 pt-1 flex-wrap">
-                      <span className="text-[11px] text-slate-400">Gợi ý:</span>
-                      {[
-                        { label: 'Navy V4.0', color: '#00479e' },
-                        { label: 'Xanh Đậm', color: '#003366' },
-                        { label: 'Xanh Lá', color: '#006633' },
-                        { label: 'Xám Đen', color: '#1e293b' },
-                      ].map((p) => (
-                        <button
-                          key={p.color}
-                          type="button"
-                          onClick={() => onUpdateConfig({ ...config, backgroundColor: p.color })}
-                          className="text-[11px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer flex items-center gap-1"
-                        >
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                          <span>{p.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Khung viền nghệ thuật khuyết 4 góc */}
-                  <div className="space-y-3 pt-2 border-t border-slate-800">
-                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Khung Viền Nghệ Thuật Khuyết 4 Góc:</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span className="text-slate-400 text-[11px] block mb-1">Màu viền:</span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={config.borderColor}
-                            onChange={(e) => onUpdateConfig({ ...config, borderColor: e.target.value })}
-                            className="w-8 h-8 rounded border border-slate-700 cursor-pointer bg-transparent"
-                          />
-                          <span className="font-mono text-xs text-white">{config.borderColor}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[11px] block mb-1">Độ thụt lề (mm):</span>
-                        <input
-                          type="number"
-                          value={config.borderInset}
-                          onChange={(e) => onUpdateConfig({ ...config, borderInset: Number(e.target.value) || 13 })}
-                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[11px] block mb-1">Độ dày viền (mm):</span>
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={config.borderThickness}
-                          onChange={(e) => onUpdateConfig({ ...config, borderThickness: Number(e.target.value) || 3.5 })}
-                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-[11px] block mb-1">Bo khuyết góc (r mm):</span>
-                        <input
-                          type="number"
-                          value={config.cornerNotchRadius}
-                          onChange={(e) => onUpdateConfig({ ...config, cornerNotchRadius: Number(e.target.value) || 16 })}
-                          className="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <SmartBorderCornerEditor
+                    config={config}
+                    onUpdateConfig={onUpdateConfig}
+                    isLocked={config.isLocked}
+                  />
                 </div>
               )}
 
@@ -1337,20 +1347,27 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
               {(activeSettingsTab === 'COORDINATES' || activeSettingsTab === 'ALL') && (
                 <div className="space-y-4 pt-3 border-t border-slate-800">
                   <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Crosshair className="w-4 h-4 text-rose-400" />
-                    <span>Tùy Chỉnh Vị Trí Chữ Tiêu Đề, Logo, Tên Đường</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleResetPositions}
-                    title="Khôi phục toàn bộ tọa độ vị trí chuẩn"
-                    className="text-[11px] text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Vị trí chuẩn</span>
-                  </button>
-                </div>
+                    <label className="text-xs font-black text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Crosshair className="w-4 h-4 text-rose-400" />
+                      <span>Tùy Chỉnh Vị Trí Chữ Tiêu Đề, Logo, Tên Đường</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleResetPositions}
+                      title="Khôi phục toàn bộ tọa độ vị trí chuẩn"
+                      className="text-[11px] text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-0.5 rounded cursor-pointer transition flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Vị trí chuẩn</span>
+                    </button>
+                  </div>
+
+                  {/* Bố cục chuẩn sản xuất 1-Click Presets */}
+                  <SmartLayoutPresets
+                    config={config}
+                    onUpdateConfig={onUpdateConfig}
+                    isLocked={config.isLocked}
+                  />
 
                 {/* 1. Vị trí Logo */}
                 <div className="bg-slate-950/90 p-3 rounded-lg border border-slate-800 space-y-2.5">
@@ -1888,6 +1905,21 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                   <span className="hidden sm:inline">Tọa độ (X,Y)</span>
                 </button>
 
+                {/* Toggle Kéo Thả Trực Tiếp */}
+                <button
+                  type="button"
+                  onClick={() => setEnableInteractiveCanvas(!enableInteractiveCanvas)}
+                  title="Bật/tắt chế độ nhấp chọn và kéo thả trực tiếp trên mặt biển"
+                  className={`p-1.5 rounded-lg border text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                    enableInteractiveCanvas
+                      ? 'bg-cyan-950 text-cyan-300 border-cyan-700 shadow-sm'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  <Move className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Kéo thả trực tiếp</span>
+                </button>
+
                 {/* Zoom */}
                 <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-xs">
                   <button
@@ -1970,6 +2002,19 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                 </div>
               )}
 
+              {/* Master Precision Nudge Bar & HUD Quick Adjust */}
+              <div className="w-full max-w-xl">
+                <PrecisionNudgeBar
+                  selectedElement={selectedElement}
+                  onSelectElement={handleSelectElementWithTabSync}
+                  config={config}
+                  onUpdateConfig={onUpdateConfig}
+                  nudgeStep={nudgeStep}
+                  onSetNudgeStep={setNudgeStep}
+                  isLocked={config.isLocked}
+                />
+              </div>
+
               {/* Vùng gá in / Bàn in chứa Artwork (Scaling & Centering box) */}
               <div
                 style={{
@@ -1989,6 +2034,19 @@ export const MasterTemplateView: React.FC<MasterTemplateViewProps> = ({
                     className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:block [&>svg]:object-contain select-none"
                     dangerouslySetInnerHTML={{ __html: currentSvg }}
                   />
+
+                  {/* Lớp tương tác trực quan kéo thả & cữ nam châm tự động (Interactive Canvas Overlay) */}
+                  {enableInteractiveCanvas && (
+                    <InteractiveSignCanvasOverlay
+                      config={config}
+                      previewMode={previewMode}
+                      selectedElement={selectedElement}
+                      onSelectElement={handleSelectElementWithTabSync}
+                      onUpdateConfig={onUpdateConfig}
+                      isLocked={config.isLocked}
+                      sampleRoadName={sampleRoadName}
+                    />
+                  )}
 
                   {/* Lớp cữ an toàn 13mm (Safe Margin Overlay Guide) */}
                   {showSafeGuide && (

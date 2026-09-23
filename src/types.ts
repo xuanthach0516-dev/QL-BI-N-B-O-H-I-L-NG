@@ -50,6 +50,7 @@ export interface MasterConfig {
   borderInset: number; // mm (13)
   borderThickness: number; // mm (3.5)
   cornerNotchRadius: number; // mm (16)
+  cornerStyle?: 'CONCAVE' | 'ROUNDED' | 'RECTANGULAR'; // Mặc định CONCAVE (Khuyết nghệ thuật đặc trưng Hải Lăng)
   titleText: string; // 'ĐƯỜNG'
   titleColor: string; // #ffffff
   titleFont: string; // 'Montserrat, sans-serif'

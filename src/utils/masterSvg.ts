@@ -9,6 +9,7 @@ export const DEFAULT_MASTER_CONFIG: MasterConfig = {
   borderInset: 13, // 13mm từ mép ngoài
   borderThickness: 3.5, // 3.5mm độ dày nét viền trắng
   cornerNotchRadius: 16, // Bo góc khuyết nghệ thuật (concave notch)
+  cornerStyle: 'CONCAVE', // 'CONCAVE' (khuyết nghệ thuật), 'ROUNDED' (bo tròn), 'RECTANGULAR' (vuông sắc nét)
   titleText: 'ĐƯỜNG',
   titleColor: '#ffffff',
   titleFont: 'Montserrat, Arial, sans-serif',
@@ -39,22 +40,46 @@ export const DEFAULT_MASTER_CONFIG: MasterConfig = {
 };
 
 /**
- * Tạo vector path cho khung viền trắng có 4 góc khuyết nghệ thuật (Corner Scallop Notch)
- * Kích thước biển 500 x 300 mm
+ * Tạo vector path cho khung viền nghệ thuật
+ * Hỗ trợ 3 kiểu:
+ * - 'CONCAVE' (Mặc định): Khuyết cung tròn lõm 4 góc đặc trưng Hải Lăng
+ * - 'ROUNDED': Bo góc tròn lồi mềm mại
+ * - 'RECTANGULAR': Vuông góc sắc nét
  */
 export function generateBorderPath(
   width: number = ARTWORK_WIDTH,
   height: number = ARTWORK_HEIGHT,
   inset: number = 13,
-  radius: number = 16
+  radius: number = 16,
+  cornerStyle: 'CONCAVE' | 'ROUNDED' | 'RECTANGULAR' = 'CONCAVE'
 ): string {
   const x1 = inset;
   const y1 = inset;
   const x2 = width - inset;
   const y2 = height - inset;
-  const r = radius;
+  const maxR = Math.max(0, Math.min((x2 - x1) / 2, (y2 - y1) / 2));
+  const r = Math.min(radius, maxR);
 
-  // Điểm bắt đầu từ đỉnh sau góc trên-trái khuyết
+  if (cornerStyle === 'RECTANGULAR' || r <= 0) {
+    return `M ${x1} ${y1} L ${x2} ${y1} L ${x2} ${y2} L ${x1} ${y2} Z`;
+  }
+
+  if (cornerStyle === 'ROUNDED') {
+    return [
+      `M ${x1 + r} ${y1}`,
+      `L ${x2 - r} ${y1}`,
+      `A ${r} ${r} 0 0 1 ${x2} ${y1 + r}`,
+      `L ${x2} ${y2 - r}`,
+      `A ${r} ${r} 0 0 1 ${x2 - r} ${y2}`,
+      `L ${x1 + r} ${y2}`,
+      `A ${r} ${r} 0 0 1 ${x1} ${y2 - r}`,
+      `L ${x1} ${y1 + r}`,
+      `A ${r} ${r} 0 0 1 ${x1 + r} ${y1}`,
+      `Z`,
+    ].join(' ');
+  }
+
+  // Mặc định: 'CONCAVE' (Khuyết lõm nghệ thuật Hải Lăng)
   return [
     `M ${x1 + r} ${y1}`,
     `L ${x2 - r} ${y1}`,
@@ -156,7 +181,8 @@ export function generateMasterArtworkSvg(
     ARTWORK_WIDTH,
     ARTWORK_HEIGHT,
     config.borderInset,
-    config.cornerNotchRadius
+    config.cornerNotchRadius,
+    config.cornerStyle || 'CONCAVE'
   );
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -267,7 +293,8 @@ export function generateAssemblyViewSvg(
     ARTWORK_WIDTH,
     ARTWORK_HEIGHT,
     config.borderInset,
-    config.cornerNotchRadius
+    config.cornerNotchRadius,
+    config.cornerStyle || 'CONCAVE'
   );
 
   return `<?xml version="1.0" encoding="UTF-8"?>
