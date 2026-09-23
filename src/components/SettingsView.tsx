@@ -480,7 +480,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             onClick={() => onGenerateSigns(4000)}
             className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg cursor-pointer shadow transition"
           >
-            <span>Sinh 4.000 Biển Toàn Tuyến Hải Lăng</span>
+            <span>Sinh 4.000 Biển Mẫu Dự Án</span>
           </button>
         </div>
       </div>

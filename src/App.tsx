@@ -68,7 +68,7 @@ export default function App() {
       batchName: 'BATCH 01',
       type: 'ZIP',
       itemCount: 500,
-      fileName: 'HAI_LANG_BATCH_01.zip',
+      fileName: 'BIEN_TEN_DUONG_BATCH_01.zip',
       fileSize: '42.5 MB',
       status: 'SUCCESS',
     },
@@ -281,6 +281,18 @@ export default function App() {
         onClose={() => setIsSelfTestOpen(false)}
         masterConfig={masterConfig}
       />
+
+      {/* Copyright Badge at Bottom Right */}
+      <footer className="fixed bottom-2 right-2 sm:bottom-3 sm:right-4 z-20 pointer-events-none select-none text-right">
+        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-lg shadow-lg pointer-events-auto transition hover:border-slate-700">
+          <div className="text-[11px] font-medium text-slate-300">
+            © 2026 XuanThachAI Studio. All rights reserved.
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Tái lập lịch sử &amp; phong cách qua trí tuệ nhân tạo.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

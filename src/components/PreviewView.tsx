@@ -172,39 +172,39 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Stage: Canvas Area */}
         <div className="lg:col-span-8 space-y-3">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6 shadow-sm flex flex-col items-center justify-center min-h-[440px] relative overflow-hidden">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col items-center justify-center min-h-[460px] relative overflow-hidden bg-blueprint-grid">
             {/* Dimension Indicator Banner */}
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 pb-3 border-b border-slate-800 mb-4">
+            <div className="w-full flex flex-wrap items-center justify-between text-xs text-slate-400 pb-3 border-b border-slate-800/80 mb-4 gap-2">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white">Đang hiển thị:</span>
+                <span className="font-bold text-white text-[11px]">Đang hiển thị:</span>
                 {viewMode === 'ARTWORK' ? (
-                  <span className="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  <span className="text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-md text-[11px]">
                     Mặt Biển In: 500 × 300 mm (KHÔNG CÓ NẸP)
                   </span>
                 ) : (
-                  <span className="text-amber-400 font-bold bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
+                  <span className="text-amber-400 font-bold bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-md text-[11px]">
                     Cụm Lắp Ghép: 530 × 300 mm (Nẹp 30mm + Mặt biển 500mm)
                   </span>
                 )}
               </div>
 
               {/* Zoom Controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-lg border border-slate-800">
                 <button
                   type="button"
                   onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-                  className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white"
+                  className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
                   title="Thu nhỏ"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
                 </button>
-                <span className="font-mono text-[11px] text-slate-300 w-10 text-center">
+                <span className="font-mono text-[11px] text-slate-200 w-10 text-center font-bold">
                   {zoomLevel}%
                 </span>
                 <button
                   type="button"
                   onClick={() => setZoomLevel((z) => Math.min(200, z + 10))}
-                  className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white"
+                  className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
                   title="Phóng to"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
@@ -212,7 +212,7 @@ export const PreviewView: React.FC<PreviewViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setZoomLevel(100)}
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 hover:text-white"
+                  className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 hover:text-white transition cursor-pointer font-bold"
                 >
                   100%
                 </button>

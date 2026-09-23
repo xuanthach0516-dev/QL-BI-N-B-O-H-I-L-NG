@@ -203,7 +203,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
             onClick={() => onGenerateProductionSigns(4000)}
             className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
           >
-            <span>Sinh 4.000 Biển Toàn Huyện</span>
+            <span>Sinh 4.000 Biển Mẫu</span>
           </button>
         </div>
 
@@ -211,7 +211,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
           <button
             type="button"
             onClick={onExportExcel}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer active:scale-95"
             title="Xuất danh sách đầy đủ 17 cột kỹ thuật"
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -221,7 +221,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -233,7 +233,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-blue-500"
+            className="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-blue-500 transition"
           />
         </div>
 
@@ -246,7 +246,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-blue-500"
+            className="bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Tất cả trạng thái ({signs.length})</option>
             <option value="QC_PASSED">Đạt QC</option>
@@ -262,7 +262,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
               setBatchFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-blue-500"
+            className="bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Tất cả các lô</option>
             {batchList.map((b) => (
@@ -279,7 +279,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-2 focus:outline-none focus:border-blue-500"
+            className="bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-2 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value={25}>25 / trang</option>
             <option value={50}>50 / trang</option>
@@ -291,17 +291,17 @@ export const DataTableView: React.FC<DataTableViewProps> = ({
 
       {/* Main Table (Rule 16: STT | MÃ BIỂN | TÊN ĐƯỜNG | CHIỀU CAO CHỮ | CHIỀU RỘNG TEXT | STATUS | BATCH | FILE) */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[600px] scrollbar-thin">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <tr className="sticky top-0 bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase tracking-wider text-[11px] z-10 shadow-xs">
                 <th className="py-3 px-3 w-16">STT</th>
                 <th className="py-3 px-3 w-28">Mã Biển</th>
                 <th className="py-3 px-4">Tên Đường</th>
                 <th className="py-3 px-3 w-24 text-center">Chiều Cao Chữ</th>
                 <th className="py-3 px-3 w-28 text-center">Chiều Rộng Text</th>
-                <th className="py-3 px-3 w-28 text-center">Status</th>
-                <th className="py-3 px-3 w-24 text-center">Batch</th>
+                <th className="py-3 px-3 w-28 text-center">Trạng Thái</th>
+                <th className="py-3 px-3 w-24 text-center">Lô</th>
                 <th className="py-3 px-3 w-24 text-center">File In</th>
                 <th className="py-3 px-3 w-28 text-right">Thao Tác</th>
               </tr>

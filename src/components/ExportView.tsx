@@ -77,8 +77,8 @@ export const ExportView: React.FC<ExportViewProps> = ({
     shouldStopRef.current = false;
     isRunningRef.current = true;
 
-    const batchLabel = selectedBatch === 'ALL' ? 'HAI_LANG_FULL_PROJECT' : selectedBatch.replace(/\s+/g, '_');
-    const zipFileName = `HAI_LANG_${batchLabel}.zip`;
+    const batchLabel = selectedBatch === 'ALL' ? 'FULL_PROJECT' : selectedBatch.replace(/\s+/g, '_');
+    const zipFileName = `BIEN_TEN_DUONG_${batchLabel}.zip`;
 
     setProgress({
       isRunning: true,

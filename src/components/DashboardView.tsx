@@ -39,33 +39,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Top Banner with Project Context */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-xl p-5 border border-blue-700/50 shadow-lg text-white">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 rounded-2xl p-5 sm:p-6 border border-blue-800/40 shadow-xl text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> DỰ ÁN CẮT &amp; SẢN XUẤT BIỂN TÊN ĐƯỜNG HUYỆN HẢI LĂNG
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-500/15 text-blue-300 border border-blue-400/30 mb-2">
+              <Sparkles className="w-3.5 h-3.5" /> DỰ ÁN SẢN XUẤT BIỂN TÊN ĐƯỜNG TIÊU CHUẨN
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
               Bảng Điều Khiển Quản Lý &amp; Kiểm Định Sản Xuất
             </h2>
-            <p className="text-sm text-blue-200/90 mt-1 max-w-3xl">
-              Hệ thống xử lý tự động quy mô <strong>4.000 biển</strong> (khả năng mở rộng 10.000 biển).
-              Tự động co tỷ lệ <code>fitRoadName()</code> không méo chữ, kiểm soát dung sai kích thước mặt in <strong>500 × 300 mm</strong> và cụm lắp ráp <strong>530 × 300 mm</strong>.
+            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed">
+              Hệ thống xử lý tự động quy mô <strong>hàng ngàn biển</strong> với thuật toán <code>fitRoadName()</code> tỷ lệ vàng không méo chữ, kiểm soát dung sai kích thước mặt in <strong>500 × 300 mm</strong> và cụm lắp ráp <strong>530 × 300 mm</strong>.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => onQuickLoadCount(4000)}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow flex items-center gap-1.5 cursor-pointer"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
-              <Layers className="w-4 h-4" /> Nạp Đủ 4.000 Biển Dự Án
+              <Layers className="w-4 h-4 text-blue-400" /> Nạp Mẫu 4.000 Biển
             </button>
             <button
               type="button"
               onClick={() => onNavigate('EXPORT')}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition shadow flex items-center gap-1.5 cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-md shadow-emerald-900/40 flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               <Download className="w-4 h-4" /> Tiến Hành Xuất File
             </button>
@@ -76,7 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Metric Cards (Rule 15: TỔNG SỐ BIỂN, ĐẠT QC, CẦN KIỂM TRA, LỖI, ĐÃ XUẤT) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
         {/* 1. Tổng số biển */}
-        <div className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 shadow-sm">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
           <div className="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Tổng Số Biển</span>
             <Layers className="w-4 h-4 text-blue-400" />
@@ -85,7 +85,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {total.toLocaleString()}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            Quy mô dự án Hải Lăng
+            Toàn bộ danh mục sản xuất
           </div>
         </div>
 
